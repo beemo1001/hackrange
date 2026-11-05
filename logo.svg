@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <g class="mark-sweep">
+    <circle cx="24" cy="24" r="20" fill="none" stroke="#dce5f4" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="103.67 12.57"/>
+    <path d="M33.1 6.2A20 20 0 0 1 41.8 14.9" fill="none" stroke="#f43f5e" stroke-width="3.4" stroke-linecap="round"/>
+  </g>
+  <circle cx="24" cy="24" r="3.4" fill="#f43f5e"/>
+  <path d="M24 13.5v4M24 30.5v4M13.5 24h4M30.5 24h4" stroke="#dce5f4" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
