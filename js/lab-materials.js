@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange lab materials (generated)
+   HackGrid lab materials (generated)
    Computed by scripts/gen_materials.py. Do not edit by hand.
    ACCEPT maps lab id -> SHA-256 hex digests of every accepted
    normalized answer. STR holds precomputed challenge strings.

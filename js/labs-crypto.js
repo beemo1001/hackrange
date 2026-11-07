@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange labs · Crypto & Hashes (6 labs)
+   HackGrid labs · Crypto & Hashes (6 labs)
    Hash identification, weak secrets, XOR key reuse, Caesar
    shifts, JWT forgery thinking and the two time pad.
    ============================================================ */

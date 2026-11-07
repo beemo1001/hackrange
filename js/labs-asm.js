@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange labs · Assembly Reading (6 labs)
+   HackGrid labs · Assembly Reading (6 labs)
    x86-64 System V, Intel syntax. Read code like a story:
    calling conventions, loops, overflow patterns, hidden data.
    ============================================================ */

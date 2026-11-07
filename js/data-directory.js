@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange data-directory.js
+   HackGrid data-directory.js
    Curated external practice labs, all free or free tier.
    Categories, difficulty, cost and setup are filterable.
    Pricing status is "at the time of writing": platforms change
@@ -171,4 +171,16 @@
   /* ------------- API + OSINT ------------- */
   D('crapi', 'OWASP crAPI', 'OWASP', 'https://github.com/OWASP/crAPI', 'web', 'intermediate', 'free', 'download', 'Completely Ridiculous API: a modern vulnerable API covering the OWASP API Top 10 with a realistic flow.', 'The best free API hacking target. Do it right after the PortSwigger API testing path.');
   D('tracelabs', 'Trace Labs Search Party CTFs', 'Trace Labs', 'https://www.tracelabs.org/', 'ctf', 'intermediate', 'free', 'browser', 'OSINT competitions where teams locate real missing persons using open source intelligence.', 'Ethically meaningful and the OSINT skills transfer directly to recon work.');
+
+  /* ------------- added for HackGrid: networking, cloud, AD, forensics, phishing ------------- */
+  D('sadservers', 'SadServers', 'SadServers', 'https://sadservers.com/', 'linux', 'beginner', 'free-tier', 'browser', 'Broken real Linux servers in your browser: fix the service, find the log, free the disk.', 'The closest thing to a real on-call shift. Pairs perfectly with our Linux labs.');
+  D('wireshark-samples', 'Wireshark sample captures', 'Wireshark', 'https://wiki.wireshark.org/SampleCaptures', 'net', 'beginner', 'free', 'download', 'Hundreds of real packet captures for every protocol to open and dissect.', 'Pick one protocol per day and follow a full conversation with Follow TCP Stream.');
+  D('messer-netplus', 'Professor Messer free courses', 'Professor Messer', 'https://www.professormesser.com/', 'net', 'beginner', 'free', 'browser', 'Free Network+ and Security+ video courses covering every networking fundamental.', 'Watch with our Networking labs open: theory there, practice here.');
+  D('flaws-cloud', 'flAWS', 'flaws.cloud', 'http://flaws.cloud/', 'cloud', 'beginner', 'free', 'browser', 'Common AWS mistakes, level by level: public buckets, leaked keys, metadata.', 'The best first cloud security lab ever made. No account needed.');
+  D('flaws2-cloud', 'flAWS 2', 'flaws.cloud', 'http://flaws2.cloud/', 'cloud', 'intermediate', 'free', 'browser', 'Attacker and defender paths through a serverless AWS setup.', 'Do the defender path too: reading CloudTrail logs is a hireable skill.');
+  D('cloudgoat', 'CloudGoat', 'Rhino Security Labs', 'https://github.com/RhinoSecurityLabs/cloudgoat', 'cloud', 'advanced', 'free', 'download', 'Deliberately vulnerable AWS scenarios you deploy into your own account.', 'Uses your own AWS account: set a billing alarm and destroy scenarios when done.');
+  D('goad', 'Game of Active Directory (GOAD)', 'Orange Cyberdefense', 'https://github.com/Orange-Cyberdefense/GOAD', 'ad', 'advanced', 'free', 'download', 'A full vulnerable Windows domain lab: Kerberos, delegation, ACL abuse.', 'Needs a strong machine (lots of RAM). Snapshot your VMs before every session.');
+  D('bots', 'Splunk Boss of the SOC v3', 'Splunk', 'https://github.com/splunk/botsv3', 'blue', 'intermediate', 'free', 'download', 'A huge realistic dataset and questions to hunt an intrusion with Splunk.', 'Our Logs labs teach the patterns; BOTS makes you find them in millions of events.');
+  D('digitalcorpora', 'Digital Corpora', 'Digital Corpora', 'https://digitalcorpora.org/', 'forensics', 'intermediate', 'free', 'download', 'Realistic disk images and scenarios used to teach digital forensics.', 'Start with a small scenario and Autopsy (free) before touching full disk images.');
+  D('phishing-quiz', 'Phishing Quiz', 'Google Jigsaw', 'https://phishingquiz.withgoogle.com/', 'phish', 'beginner', 'free', 'browser', 'Real-looking emails: decide phishing or legit and learn why.', 'Share it with family too: phishing awareness is everyone’s job.');
 })();

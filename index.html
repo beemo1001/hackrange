@@ -3,120 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HackRange · The Practice Arena</title>
-  <meta name="description" content="HackRange is a free hacking practice arena for students: 54 built-in labs (XSS, SQLi, command injection, Linux diagnosis, assembly, crypto) that run in your browser, plus 120+ curated external labs and 6 learning paths. XP, ranks, badges. No account, works offline.">
-  <meta name="theme-color" content="#0a0f1c">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='20' fill='none' stroke='%23dce5f4' stroke-width='3.1' stroke-linecap='round' stroke-dasharray='103.67 12.57'/%3E%3Cpath d='M33.1 6.2A20 20 0 0 1 41.8 14.9' fill='none' stroke='%23f43f5e' stroke-width='3.7' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='24' r='3.4' fill='%23f43f5e'/%3E%3Cpath d='M24 13.5v4M24 30.5v4M13.5 24h4M30.5 24h4' stroke='%23dce5f4' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
-  <!-- Fonts: graceful fallback to system stack if offline -->
+  <title>HackGrid · CyberFlow</title>
+  <meta name="description" content="HackGrid by CyberFlow: hands-on cybersecurity practice labs for Linux, networking, web, secure code review, logs and incident response, forensics, phishing, crypto and assembly, plus learning paths and a curated directory of free hacking platforms.">
+  <meta name="theme-color" content="#070708">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/labs.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Michroma&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cyberflow.css">
+  <link rel="stylesheet" href="css/hackgrid.css">
 </head>
 <body>
 
-  <header class="site-header">
-    <a class="logo" href="#/" aria-label="HackRange home">
-      <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
-        <g class="mark-sweep">
-          <circle cx="24" cy="24" r="20" fill="none" stroke="#dce5f4" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="103.67 12.57"/>
-          <path d="M33.1 6.2A20 20 0 0 1 41.8 14.9" fill="none" stroke="#f43f5e" stroke-width="3.4" stroke-linecap="round"/>
-        </g>
-        <circle cx="24" cy="24" r="3.4" fill="#f43f5e"/>
-        <path d="M24 13.5v4M24 30.5v4M13.5 24h4M30.5 24h4" stroke="#dce5f4" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
-      <span class="logo-word">Hack<em>Range</em></span>
-    </a>
-    <nav class="nav" aria-label="Main">
-      <a href="#/" class="active">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
-        Home</a>
-      <a href="#/arena">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4z"/><path d="M4 8h16"/><path d="M8 4v4"/><path d="M9 20l3-4 3 4"/></svg>
-        Arena</a>
-      <a href="#/directory">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/></svg>
-        Directory</a>
-      <a href="#/paths">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a2 2 0 0 0 2-2V7"/><path d="M16 5H8a2 2 0 0 0-2 2v10"/></svg>
-        Paths</a>
-      <a href="#/progress">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
-        Progress</a>
-    </nav>
-    <span class="sync-status ok" id="xpChip" title="Your XP and rank"></span>
-  </header>
-
-  <main id="main" aria-live="polite">
-
-    <!-- boot screen (family style) -->
-    <div class="boot">
-      <div class="boot-inner">
-        <svg class="boot-mark" viewBox="0 0 48 48" aria-hidden="true">
-          <g class="mark-sweep">
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#dce5f4" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="103.67 12.57"/>
-            <path d="M33.1 6.2A20 20 0 0 1 41.8 14.9" fill="none" stroke="#f43f5e" stroke-width="3.4" stroke-linecap="round"/>
-          </g>
-          <circle cx="24" cy="24" r="3.4" fill="#f43f5e"/>
-          <path d="M24 13.5v4M24 30.5v4M13.5 24h4M30.5 24h4" stroke="#dce5f4" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-        <div class="boot-word">Hack<em>Range</em></div>
-        <div class="boot-tag">the practice arena</div>
-        <div class="boot-bar"><div class="boot-fill"></div></div>
-        <div class="boot-status">initializing...</div>
+  <header class="cf-header">
+    <div class="wrap">
+      <a class="cf-brand" href="#/" aria-label="HackGrid home">
+        <i data-cf-mark></i>
+        <span class="cf-word"><b>HackGrid</b><small>by CyberFlow</small></span>
+      </a>
+      <nav class="cf-nav" aria-label="Main">
+        <a href="#/">Home</a>
+        <a href="#/labs">Labs</a>
+        <a href="#/paths">Paths</a>
+        <a href="#/directory">Directory</a>
+        <a href="#/profile">Profile</a>
+      </nav>
+      <div class="cf-header-right">
+        <a class="xp-chip" id="xpChip" href="#/profile" title="Your XP and rank"></a>
+        <div id="cfSuite"></div>
       </div>
     </div>
+  </header>
 
-  </main>
+  <main id="main" class="wrap" aria-live="polite"></main>
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="footer-logo">
-          <svg viewBox="0 0 48 48" aria-hidden="true">
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#8b9bb8" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="103.67 12.57"/>
-            <path d="M33.1 6.2A20 20 0 0 1 41.8 14.9" fill="none" stroke="#f43f5e" stroke-width="3.4" stroke-linecap="round"/>
-            <circle cx="24" cy="24" r="3.4" fill="#f43f5e"/>
-            <path d="M24 13.5v4M24 30.5v4M13.5 24h4M30.5 24h4" stroke="#8b9bb8" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-          <span>HackRange</span>
-        </div>
-        <p>The practice arena for security students: 54 browser labs, 120+ curated external labs and 6 learning paths. Learn by doing, from first flag to bug bounty ready.</p>
+  <footer class="cf-footer">
+    <div class="wrap">
+      <div>
+        <a class="cf-brand" href="#/"><i data-cf-mark></i><span class="cf-word"><b>HackGrid</b><small>by CyberFlow</small></span></a>
+        <p>Progress is saved in your browser only. Every target here is fictional or a platform built for legal practice. Only ever test systems you are authorized to test.</p>
       </div>
-      <div class="footer-col">
-        <h4>Practice</h4>
-        <a href="#/arena">The Arena (54 labs)</a>
-        <a href="#/directory">The Directory (external)</a>
-        <a href="#/paths">Learning paths</a>
-        <a href="#/progress">Progress and badges</a>
-        <span>Companion to BountyFlow and SecLab</span>
-      </div>
-      <div class="footer-col">
-        <h4>Notice</h4>
-        <span>Educational tool. Practice only on ranges built for practice and programs you are authorized to test. Stay in scope. Hack ethically.</span>
-        <span>Free forever · no APIs · no keys · no telemetry · progress stays in your browser · deployable on GitHub Pages</span>
-      </div>
+      <nav id="cfFooterLinks" aria-label="CyberFlow tools"></nav>
     </div>
   </footer>
 
+  <script src="js/cyberflow.js"></script>
   <script src="js/lab-materials.js"></script>
   <script src="js/core.js"></script>
   <script src="js/envs.js"></script>
-  <script src="js/labs-encoding.js"></script>
-  <script src="js/labs-xss.js"></script>
-  <script src="js/labs-sqli.js"></script>
-  <script src="js/labs-cmdi.js"></script>
-  <script src="js/labs-adapt.js"></script>
   <script src="js/labs-linux.js"></script>
-  <script src="js/labs-asm.js"></script>
+  <script src="js/labs-net.js"></script>
+  <script src="js/labs-web.js"></script>
+  <script src="js/labs-code.js"></script>
+  <script src="js/labs-encoding.js"></script>
   <script src="js/labs-crypto.js"></script>
+  <script src="js/labs-logs.js"></script>
+  <script src="js/labs-forensics.js"></script>
+  <script src="js/labs-phish.js"></script>
+  <script src="js/labs-asm.js"></script>
+  <script src="js/labs-adapt.js"></script>
   <script src="js/data-directory.js"></script>
   <script src="js/data-paths.js"></script>
-  <script src="js/arena.js"></script>
-  <script src="js/directory.js"></script>
-  <script src="js/paths.js"></script>
-  <script src="js/views.js"></script>
+  <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

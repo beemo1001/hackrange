@@ -1,98 +1,52 @@
 /* ============================================================
-   HackRange app.js
-   Router, boot screen, header XP chip, navigation state.
+   HackGrid app.js
+   Router and header XP chip.
    ============================================================ */
-
-window.HRApp = (function () {
+window.HGApp = (function () {
+  'use strict';
   const HR = window.HR;
-  const app = {};
 
-  const main = () => document.getElementById('main');
-
-  app.refreshChip = function () {
+  function refreshChip() {
     const el = document.getElementById('xpChip');
     if (!el) return;
-    const state = HR.loadState();
-    const xp = HR.computeXP(state);
-    const info = HR.rankFor(xp);
-    el.innerHTML = '<span class="xp-chip-big">' + xp + ' XP</span><span class="rank-chip-mini">' + info.rank.name + '</span>';
-  };
-
-  function setActiveNav(hash) {
-    const navs = document.querySelectorAll('.nav a');
-    const first = (hash || '#/').split('/')[1] || '';
-    navs.forEach(a => {
-      const target = (a.getAttribute('href') || '').replace('#/', '').split('/')[0];
-      a.classList.toggle('active', target === first);
-    });
+    const xp = HR.computeXP(HR.loadState());
+    el.innerHTML = '';
+    el.append(Object.assign(document.createElement('b'), { textContent: xp + ' XP' }), Object.assign(document.createElement('span'), { textContent: HR.rankFor(xp).rank.name }));
   }
+
+  const ROUTES = [
+    [/^#?\/?$/, m => HG.home(m)],
+    [/^#\/labs$/, m => HG.labs(m)],
+    [/^#\/labs\/([a-z]+)$/, (m, x) => HG.labs(m, x[1])],
+    [/^#\/arena(?:\/([a-z]+))?$/, (m, x) => { location.hash = x[1] ? '#/labs/' + x[1] : '#/labs'; }], // old HackRange links
+    [/^#\/lab\/([a-z0-9-]+)$/, (m, x) => HG.lab(m, x[1])],
+    [/^#\/paths$/, m => HG.paths(m)],
+    [/^#\/path\/([a-z0-9-]+)$/, (m, x) => HG.path(m, x[1])],
+    [/^#\/directory$/, m => HG.directory(m)],
+    [/^#\/(profile|progress)$/, m => HG.profile(m)]
+  ];
 
   function render() {
     const hash = location.hash || '#/';
-    const state = HR.loadState();
-    const m = main();
-    if (!m) return;
-    m.innerHTML = '';
-    setActiveNav(hash);
-
-    let handled = false;
-    const routes = [
-      [/^#?\/?$/, function () { HR.views.home(m, state); }],
-      [/^#\/arena$/, function () { HR.arena.home(m, state); }],
-      [/^#\/arena\/([a-z]+)$/, function (mm) { HR.arena.category(m, state, mm[1]); }],
-      [/^#\/lab\/([a-z0-9-]+)$/, function (mm) { HR.arena.lab(m, state, mm[1]); }],
-      [/^#\/directory$/, function () { HR.directory.view(m, state); }],
-      [/^#\/paths$/, function () { HR.pathsView.view(m, state); }],
-      [/^#\/path\/([a-z0-9-]+)$/, function (mm) { HR.pathsView.detail(m, state, mm[1]); }],
-      [/^#\/progress$/, function () { HR.views.progress(m, state); }]
-    ];
-    for (const r of routes) {
-      const mm = hash.match(r[0]);
-      if (mm) { r[1](mm); handled = true; break; }
-    }
-    if (!handled) { location.hash = '#/'; return; }
-
-    /* keep scroll at top on view change, but not when only hash param changed within lab view */
+    const main = document.getElementById('main');
+    main.innerHTML = '';
+    const top = '#/' + (hash.replace(/^#\/?/, '').split('/')[0] || '');
+    const navKey = { '#/lab': '#/labs', '#/path': '#/paths', '#/progress': '#/profile' }[top] || top;
+    document.querySelectorAll('.cf-nav a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === navKey));
+    const r = ROUTES.find(([re]) => re.test(hash));
+    if (!r) { location.hash = '#/'; return; }
+    r[1](main, hash.match(r[0]));
     window.scrollTo(0, 0);
-    app.refreshChip();
+    refreshChip();
   }
 
-  /* boot screen, family style */
-  function boot() {
-    const boot = document.querySelector('.boot');
-    const fill = document.querySelector('.boot-fill');
-    const status = document.querySelector('.boot-status');
-    const steps = [
-      'loading lab definitions...',
-      'compiling ' + HR.labs.length + ' challenge environments...',
-      'indexing ' + HR.dir.length + ' external labs...',
-      'checking local progress...',
-      'ready'
-    ];
-    let i = 0, pct = 0;
-    const t = setInterval(function () {
-      pct = Math.min(100, pct + 12 + Math.random() * 18);
-      if (fill) fill.style.width = pct + '%';
-      if (status) status.textContent = steps[Math.min(i, steps.length - 1)];
-      i++;
-      if (pct >= 100) {
-        clearInterval(t);
-        setTimeout(function () {
-          if (boot) boot.remove();
-          render();
-        }, 260);
-      }
-    }, 130);
-  }
-
-  app.start = function () {
+  function start() {
+    CF.initChrome('hackgrid');
     window.addEventListener('hashchange', render);
-    boot();
-  };
+    render();
+  }
 
-  return app;
+  return { start, render, refreshChip };
 })();
 
-document.addEventListener('DOMContentLoaded', function () {
-  HRApp.start();
-});
+document.addEventListener('DOMContentLoaded', HGApp.start);

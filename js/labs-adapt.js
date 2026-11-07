@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange labs · Payload Adaptation (7 labs)
+   HackGrid labs · Payload Adaptation (7 labs)
    Not a cheat sheet. Each lab is a failed attempt with evidence:
    read the request, the response, the context, then produce the
    fix. This is the skill that turns basic findings into bounties.

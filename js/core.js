@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange core.js
+   HackGrid core.js
    Namespace, pure-JS SHA-256, progress store, XP + ranks,
    badges, hash router, DOM helpers, toasts.
    Written to run headless (no top level DOM access) so the
@@ -77,16 +77,19 @@ window.HR = (function () {
 
   /* ---------------- categories + difficulty ---------------- */
   HR.CATS = {
-    enc:    { name: 'Encoding & Decoding', color: 'cyan',   icon: '🧩', blurb: 'Base64, hex, URL, unicode and JWT layers. The decoder mindset behind every payload craft.' },
-    xss:    { name: 'XSS Playground',      color: 'amber',  icon: '⚡', blurb: 'Simulated reflection contexts with real filter logic. Learn to read the context before you inject.' },
-    sqli:   { name: 'SQL Injection',       color: 'violet', icon: '🗄️', blurb: 'A mock query console: UNION attacks, WAF space filters, blind, time based and hex-only injection.' },
-    cmdi:   { name: 'Command Injection',   color: 'red',    icon: '💉', blurb: 'Blacklists, chaining, string obfuscation and out of band exfiltration on a simulated ping tool.' },
-    adapt:  { name: 'Payload Adaptation',  color: 'blue',   icon: '🧬', blurb: 'A payload failed. Diagnose why from the evidence, then produce the fix. The bug bounty skill.' },
-    linux:  { name: 'Linux Diagnosis',     color: 'green',  icon: '🐧', blurb: 'A simulated terminal, a broken box and no hints. Permissions, disks, DNS, cron and inodes.' },
-    asm:    { name: 'Assembly Reading',    color: 'slate',  icon: '🔧', blurb: 'Read x86-64 like a story: calling conventions, loops, overflow patterns and hidden constants.' },
-    crypto: { name: 'Crypto & Hashes',     color: 'pink',   icon: '🔐', blurb: 'Hash identification, weak secrets, XOR key reuse, Caesar shifts and JWT forgery thinking.' }
+    linux:   { name: 'Linux & terminal',     short: 'Linux',    blurb: 'A real-feeling terminal and a broken box. Permissions, disks, services, DNS, cron.' },
+    net:     { name: 'Networking',           short: 'Network',  blurb: 'Subnets, ports, scans, DNS records and packets. The map every attack and defense is drawn on.' },
+    web:     { name: 'Web & HTTP',           short: 'Web',      blurb: 'Read requests and responses like a pro: status codes, cookies, headers, tokens, leaks.' },
+    code:    { name: 'Secure code review',   short: 'Code',     blurb: 'Spot the vulnerable line, name the bug class, choose the right fix.' },
+    enc:     { name: 'Encoding & decoding',  short: 'Encoding', blurb: 'Base64, hex, URL and unicode layers, and JWT structure. The decoder mindset.' },
+    crypto:  { name: 'Crypto & passwords',   short: 'Crypto',   blurb: 'Identify hashes, spot weak secrets and key reuse, reason about password strength.' },
+    logs:    { name: 'Logs & incident response', short: 'Blue team', blurb: 'Find the attacker in auth logs, web logs and Windows events. Build the timeline.' },
+    forensics: { name: 'Forensics',          short: 'Forensics', blurb: 'Magic bytes, metadata, strings and timestamps. Make the evidence talk.' },
+    phish:   { name: 'Phishing & social engineering', short: 'Phishing', blurb: 'Read email headers, unmask lookalike domains and deceptive links.' },
+    asm:     { name: 'Assembly reading',     short: 'Assembly', blurb: 'Read x86-64 like a story: calling conventions, loops, overflows and hidden constants.' },
+    adapt:   { name: 'Payload diagnosis',    short: 'Diagnosis', blurb: 'Something failed. Read the evidence, explain why, and name the fix.' }
   };
-  HR.CAT_ORDER = ['enc', 'xss', 'sqli', 'cmdi', 'adapt', 'linux', 'asm', 'crypto'];
+  HR.CAT_ORDER = ['linux', 'net', 'web', 'code', 'enc', 'crypto', 'logs', 'forensics', 'phish', 'asm', 'adapt'];
 
   HR.DIFFS = {
     1: { label: 'Easy',   xp: 10,  cls: 'diff-1' },
@@ -106,23 +109,28 @@ window.HR = (function () {
   HR.EXT_XP = 5;
 
   HR.BADGES = [
-    { id: 'first-blood',    icon: '🩸', name: 'First Blood',       desc: 'Solve your first arena lab.' },
-    { id: 'warming-up',     icon: '🔥', name: 'Warming Up',        desc: 'Solve 5 arena labs.' },
-    { id: 'double-digits',  icon: '🔟', name: 'Double Digits',     desc: 'Solve 10 arena labs.' },
-    { id: 'halfway',        icon: '🌗', name: 'Halfway There',     desc: 'Solve 27 arena labs.' },
-    { id: 'completionist',  icon: '🏆', name: 'Completionist',     desc: 'Solve every arena lab. Legends only.' },
-    { id: 'purist',         icon: '🧠', name: 'Purist',            desc: 'Solve 3 labs without opening a single hint.' },
-    { id: 'cat-master',     icon: '🎯', name: 'Category Master',   desc: 'Fully clear any one arena category.' },
-    { id: 'explorer',       icon: '🧭', name: 'Explorer',          desc: 'Mark 10 external labs as done.' },
-    { id: 'cartographer',   icon: '🗺️', name: 'Cartographer',      desc: 'Finish any learning path from start to end.' },
-    { id: 'night-owl',      icon: '🦉', name: 'Night Owl',         desc: 'Solve a lab between midnight and 5am.' }
+    { id: 'first-blood',   name: 'First Blood',     desc: 'Solve your first lab.' },
+    { id: 'warming-up',    name: 'Warming Up',      desc: 'Solve 5 labs.' },
+    { id: 'double-digits', name: 'Double Digits',   desc: 'Solve 10 labs.' },
+    { id: 'halfway',       name: 'Halfway There',   desc: 'Solve half of all labs.' },
+    { id: 'completionist', name: 'Completionist',   desc: 'Solve every lab.' },
+    { id: 'purist',        name: 'Purist',          desc: 'Solve 3 labs without opening a single hint.' },
+    { id: 'cat-master',    name: 'Category Master', desc: 'Clear every lab in one category.' },
+    { id: 'polymath',      name: 'Polymath',        desc: 'Solve a lab in every category.' },
+    { id: 'explorer',      name: 'Explorer',        desc: 'Mark 10 external labs as done.' },
+    { id: 'cartographer',  name: 'Cartographer',    desc: 'Finish a learning path.' },
+    { id: 'night-owl',     name: 'Night Owl',       desc: 'Solve a lab between midnight and 5am.' }
   ];
 
   /* ---------------- registration ---------------- */
   HR.defineLab = function (lab) {
     lab.diff = lab.diff || 1;
     lab.xp = HR.DIFFS[lab.diff].xp;
-    lab.accept = (window.HR_MAT && HR_MAT.ACCEPT[lab.id]) || [];
+    lab.accept = lab.accept || (window.HR_MAT && HR_MAT.ACCEPT[lab.id]) || [];
+    // older labs carry their multiple choice inside the evidence: lift it into lab.q / lab.choices
+    const blocks = (lab.env && lab.env.blocks) || [];
+    const mc = blocks.find(b => b.t === 'mc');
+    if (mc && !lab.choices) { lab.q = lab.q || mc.q; lab.choices = mc.options; lab.env.blocks = blocks.filter(b => b !== mc); }
     lab.str = (window.HR_MAT && HR_MAT.STR) || {};
     HR.labs.push(lab);
     HR.labById[lab.id] = lab;
@@ -138,7 +146,8 @@ window.HR = (function () {
   };
 
   /* ---------------- progress store ---------------- */
-  const KEY = 'hackrange-progress-v1';
+  const KEY = 'hackgrid-progress-v1';
+  const OLD_KEY = 'hackrange-progress-v1';
 
   HR.defaultState = function () {
     return { v: 1, solved: {}, ext: {}, paths: {}, badges: {} };
@@ -146,7 +155,8 @@ window.HR = (function () {
 
   HR.loadState = function () {
     try {
-      const raw = (typeof localStorage !== 'undefined') ? localStorage.getItem(KEY) : null;
+      let raw = (typeof localStorage !== 'undefined') ? localStorage.getItem(KEY) : null;
+      if (!raw && typeof localStorage !== 'undefined') raw = localStorage.getItem(OLD_KEY); // carry over HackRange progress
       if (!raw) return HR.defaultState();
       const s = JSON.parse(raw);
       if (!s || s.v !== 1) return HR.defaultState();
@@ -200,7 +210,8 @@ window.HR = (function () {
     if (solvedCount >= 1) add('first-blood');
     if (solvedCount >= 5) add('warming-up');
     if (solvedCount >= 10) add('double-digits');
-    if (solvedCount >= 27) add('halfway');
+    if (solvedCount >= Math.ceil(HR.labs.length / 2)) add('halfway');
+    if (HR.CAT_ORDER.every(c => HR.labs.some(l => l.cat === c && state.solved[l.id]))) add('polymath');
     if (solvedCount >= HR.labs.length) add('completionist');
     if (solvedCount >= 1) {
       const hour = new Date().getHours();
@@ -331,7 +342,7 @@ window.HR = (function () {
 
   HR.confetti = function () {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#4c7dff', '#7ea6ff', '#f43f5e', '#34d399', '#fbbf24', '#e9eef7'];
+    const colors = ['#e0243a', '#ff4458', '#a51c30', '#f2f2f4', '#7d7d88'];
     const wrap = HR.el('div', { class: 'confetti-wrap' });
     for (let i = 0; i < 34; i++) {
       const p = HR.el('div', { class: 'confetti-p' });

@@ -1,11 +1,8 @@
 /* ============================================================
-   HackRange envs.js
-   Challenge environment engines:
-   - static  : scenario blocks (code, request/response, story)
-   - reflect : simulated XSS reflection page with WAF rules
-   - query   : mock SQL console (formed query + result table)
-   - cmdi    : simulated command injection shell output
-   - terminal: interactive fake Linux shell with a mini filesystem
+   HackGrid envs.js
+   Challenge environments:
+   - static  : evidence blocks (code, request/response, tables, logs)
+   - terminal: interactive simulated Linux shell with a mini filesystem
    Everything is rendered ESCAPED. No user input is ever injected
    into the DOM as raw HTML.
    ============================================================ */
@@ -23,278 +20,36 @@ window.HR.envs = (function () {
     return w;
   }
 
-  function banner(type, html) {
-    return HR.el('div', { class: 'env-banner ' + type, html: html });
-  }
-
-  function resultTable(spec) {
-    if (!spec || !spec.cols) return null;
-    const t = HR.el('table', { class: 'env-table' });
-    const thead = HR.el('thead');
-    const trh = HR.el('tr');
-    spec.cols.forEach(c => trh.appendChild(HR.el('th', { text: c })));
-    thead.appendChild(trh); t.appendChild(thead);
-    const tb = HR.el('tbody');
-    (spec.rows || []).forEach(r => {
-      const tr = HR.el('tr');
-      r.forEach(cell => {
-        const td = HR.el('td');
-        if (String(cell).indexOf('HR{') !== -1) {
-          td.className = 'env-flagcell';
-          td.appendChild(HR.el('span', { class: 'env-flagtext', text: String(cell) }));
-        } else td.textContent = String(cell);
-        tr.appendChild(td);
-      });
-      tb.appendChild(tr);
-    });
-    t.appendChild(tb);
-    return t;
-  }
-
-  function flagPanel(flag, api) {
-    const p = HR.el('div', { class: 'env-flagpanel' });
-    p.appendChild(HR.el('div', { class: 'env-flaghead' }));
-    const label = HR.el('div', { class: 'env-flaglabel', text: 'CHALLENGE SOLVED · YOUR FLAG' });
-    const row = HR.el('div', { class: 'env-flagrow' });
-    const code = HR.el('code', { class: 'env-flagcode', text: flag });
-    const copy = HR.el('button', {
-      class: 'btn small', type: 'button', text: 'Copy',
-      onclick: function () {
-        try { navigator.clipboard.writeText(flag); } catch (e) { }
-        copy.textContent = 'Copied';
-        setTimeout(function () { copy.textContent = 'Copy'; }, 1400);
-      }
-    });
-    row.appendChild(code); row.appendChild(copy);
-    p.appendChild(label); p.appendChild(row);
-    return p;
-  }
-
-  /* trigger the shared solve flow */
-  function fireSolve(lab, api, flag, mount) {
-    if (api.onSolve) api.onSolve(flag, mount);
-  }
-
   /* ============================================================
-     STATIC scenario blocks
+     STATIC scenario blocks (evidence the student analyzes)
+     block types: p, code, req, res, table, list
      ============================================================ */
-  envs.static = function (mount, lab, api) {
-    const blocks = lab.env.blocks || [];
-    blocks.forEach(b => {
+  envs.static = function (mount, lab) {
+    (lab.env.blocks || []).forEach(b => {
       if (b.t === 'p') mount.appendChild(HR.el('p', { class: 'env-p', html: b.html }));
-      else if (b.t === 'code') mount.appendChild(codeBlock(b.title, b.text));
+      else if (b.t === 'code') mount.appendChild(codeBlock(b.title, b.text, b.cls));
       else if (b.t === 'req') {
         const text = b.method + ' ' + b.url + ' HTTP/1.1\n' + (b.headers || '') + (b.body ? '\n\n' + b.body : '');
-        mount.appendChild(codeBlock('Request', text));
+        mount.appendChild(codeBlock(b.title || 'Request', text));
       } else if (b.t === 'res') {
         const text = 'HTTP/1.1 ' + b.status + '\n' + (b.headers || '') + (b.text ? '\n\n' + b.text : '');
-        mount.appendChild(codeBlock('Response', text, 'env-code-res'));
-      } else if (b.t === 'mc') {
-        const box = HR.el('div', { class: 'mc-box' });
-        box.appendChild(HR.el('div', { class: 'mc-title', text: b.q }));
-        b.options.forEach((o, i) => {
-          box.appendChild(HR.el('div', {
-            class: 'mc-opt',
-            html: '<span class="mc-letter">' + String.fromCharCode(65 + i) + '</span><span>' + HR.esc(o) + '</span>',
-            onclick: function () {
-              Array.prototype.forEach.call(box.querySelectorAll('.mc-opt'), x => x.classList.remove('sel'));
-              box.classList.add('sel');
-              box.setAttribute('data-pick', String.fromCharCode(65 + i));
-            }
-          }));
-        });
-        mount.appendChild(box);
+        mount.appendChild(codeBlock(b.title || 'Response', text, 'env-code-res'));
+      } else if (b.t === 'table') {
+        const wrap = HR.el('div', { class: 'env-tablewrap' });
+        if (b.title) wrap.appendChild(HR.el('div', { class: 'env-code-title', text: b.title }));
+        const t = HR.el('table', { class: 'env-table' });
+        const trh = HR.el('tr');
+        b.cols.forEach(c => trh.appendChild(HR.el('th', { text: c })));
+        const th = HR.el('thead'); th.appendChild(trh); t.appendChild(th);
+        const tb = HR.el('tbody');
+        b.rows.forEach(r => { const tr = HR.el('tr'); r.forEach(c => tr.appendChild(HR.el('td', { text: String(c) }))); tb.appendChild(tr); });
+        t.appendChild(tb); wrap.appendChild(t); mount.appendChild(wrap);
+      } else if (b.t === 'list') {
+        const ul = HR.el('ul', { class: 'env-list' });
+        b.items.forEach(i => ul.appendChild(HR.el('li', { html: i })));
+        mount.appendChild(ul);
       }
     });
-  };
-
-  /* ============================================================
-     REFLECT engine (XSS)
-     lab.env = { app, build(input), waf:[{re,msg}], exec(input) }
-     ============================================================ */
-  envs.reflect = function (mount, lab, api) {
-    const env = lab.env;
-    const head = HR.el('div', { class: 'env-apphead' });
-    head.appendChild(HR.el('span', { class: 'env-appdot' }));
-    head.appendChild(HR.el('span', { class: 'env-appname', text: env.app }));
-    head.appendChild(HR.el('span', { class: 'env-apppath', text: 'https://lab.hackrange.local/search' }));
-    mount.appendChild(head);
-
-    const row = HR.el('div', { class: 'env-inputrow' });
-    const inp = HR.el('input', {
-      class: 'input env-inject-input', type: 'text',
-      placeholder: env.placeholder || 'type your input for the page',
-      spellcheck: 'false'
-    });
-    const btn = HR.el('button', { class: 'btn primary', type: 'button', text: 'Inject' });
-    row.appendChild(inp); row.appendChild(btn);
-    mount.appendChild(row);
-
-    const out = HR.el('div', { class: 'env-out' });
-    mount.appendChild(out);
-    out.appendChild(HR.el('div', { class: 'env-hintline', html: 'Enter a value and press <b>Inject</b>. The page below is a faithful simulation of how the server embeds your input.' }));
-
-    function run() {
-      const v = inp.value;
-      out.innerHTML = '';
-      if (!v.trim()) {
-        out.appendChild(banner('info', 'Type something first. Even a boring word like <span class="mono">book</span> shows you the reflection.'));
-        return;
-      }
-      for (const rule of (env.waf || [])) {
-        if (rule.re.test(v)) {
-          out.appendChild(banner('blocked', '<b>Blocked by WAF.</b> ' + HR.esc(rule.msg) + ' <span class="mono dim">403 Forbidden</span>'));
-          out.appendChild(codeBlock('Server response', 'HTTP/1.1 403 Forbidden\ncontent-type: text/html\n\n<h1>403</h1>Request blocked by security filter.'));
-          return;
-        }
-      }
-      const html = env.build(v);
-      out.appendChild(codeBlock('What the server sent back (raw HTML)', html));
-      const verdict = env.exec(v);
-      if (verdict === true) {
-        const browser = HR.el('div', { class: 'env-browser' });
-        const bar = HR.el('div', { class: 'env-browserbar', html: '<span></span><span></span><span></span>' });
-        const view = HR.el('div', { class: 'env-browserview' });
-        const txt = HR.el('div', { class: 'env-inert', text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '(empty page)' });
-        view.appendChild(txt);
-        const alert = HR.el('div', { class: 'fake-alert' });
-        alert.appendChild(HR.el('div', { class: 'fake-alert-title', text: 'lab.hackrange.local says' }));
-        alert.appendChild(HR.el('div', { class: 'fake-alert-body', text: '1' }));
-        alert.appendChild(HR.el('button', { class: 'btn small', type: 'button', text: 'OK' }));
-        view.appendChild(alert);
-        browser.appendChild(bar);
-        browser.appendChild(view);
-        out.appendChild(browser);
-        out.appendChild(banner('ok', '<b>Script execution confirmed.</b> The event fired and JavaScript ran. That is a real XSS.'));
-        out.appendChild(flagPanel(lab.flag, api));
-        fireSolve(lab, api, lab.flag, mount);
-      } else {
-        const browser = HR.el('div', { class: 'env-browser' });
-        const bar = HR.el('div', { class: 'env-browserbar', html: '<span></span><span></span><span></span>' });
-        const view = HR.el('div', { class: 'env-browserview' });
-        const txt = HR.el('div', { class: 'env-inert', text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '(empty page)' });
-        view.appendChild(txt);
-        browser.appendChild(bar); browser.appendChild(view);
-        out.appendChild(browser);
-        const note = typeof verdict === 'string' ? verdict : 'The HTML rendered but nothing executed. Read the raw response above: where exactly did your payload land?';
-        out.appendChild(banner('info', HR.esc(note)));
-      }
-    }
-    btn.addEventListener('click', run);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
-  };
-
-  /* ============================================================
-     QUERY engine (SQL injection)
-     lab.env = { label, placeholder, sql(input), waf, run(input) }
-     ============================================================ */
-  envs.query = function (mount, lab, api) {
-    const env = lab.env;
-    const row = HR.el('div', { class: 'env-inputrow' });
-    const inp = HR.el('input', {
-      class: 'input env-inject-input', type: 'text',
-      placeholder: env.placeholder || "inject into the query",
-      spellcheck: 'false'
-    });
-    const btn = HR.el('button', { class: 'btn primary', type: 'button', text: env.action || 'Submit' });
-    row.appendChild(inp); row.appendChild(btn);
-    mount.appendChild(row);
-
-    const out = HR.el('div', { class: 'env-out' });
-    mount.appendChild(out);
-    out.appendChild(HR.el('div', {
-      class: 'env-hintline',
-      html: 'Value goes into: <span class="mono">' + HR.esc(env.template) + '</span>'
-    }));
-
-    function run() {
-      const v = inp.value;
-      out.innerHTML = '';
-      if (!v.trim()) { out.appendChild(banner('info', 'Enter a value for the parameter first.')); return; }
-      for (const rule of (env.waf || [])) {
-        if (rule.re.test(v)) {
-          out.appendChild(banner('blocked', '<b>WAF:</b> ' + HR.esc(rule.msg)));
-          return;
-        }
-      }
-      const sql = env.sql(v);
-      out.appendChild(codeBlock('Query sent to the database', sql));
-      const r = env.run(v);
-      if (r.error) out.appendChild(banner('error', '<b>Database error:</b> ' + HR.esc(r.error)));
-      if (r.msg) out.appendChild(banner(r.ok ? 'ok' : 'info', HR.esc(r.msg)));
-      if (r.rows) {
-        const t = resultTable(r.rows);
-        if (t) out.appendChild(t);
-      }
-      if (r.solved) {
-        out.appendChild(flagPanel(lab.flag, api));
-        fireSolve(lab, api, lab.flag, mount);
-      }
-    }
-    btn.addEventListener('click', run);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
-  };
-
-  /* ============================================================
-     CMDI engine (command injection)
-     lab.env = { label, placeholder, multiline, waf, run(input) }
-     ============================================================ */
-  envs.cmdi = function (mount, lab, api) {
-    const env = lab.env;
-    const head = HR.el('div', { class: 'env-apphead' });
-    head.appendChild(HR.el('span', { class: 'env-appdot' }));
-    head.appendChild(HR.el('span', { class: 'env-appname', text: env.app }));
-    head.appendChild(HR.el('span', { class: 'env-apppath', text: 'https://lab.hackrange.local/tools/ping' }));
-    mount.appendChild(head);
-
-    const row = HR.el('div', { class: 'env-inputrow' + (env.multiline ? ' env-inputrow-col' : '') });
-    let inp;
-    if (env.multiline) {
-      inp = HR.el('textarea', {
-        class: 'input env-inject-area', rows: '3',
-        placeholder: env.placeholder || 'hostname to ping',
-        spellcheck: 'false'
-      });
-    } else {
-      inp = HR.el('input', {
-        class: 'input env-inject-input', type: 'text',
-        placeholder: env.placeholder || 'hostname to ping',
-        spellcheck: 'false'
-      });
-    }
-    const btn = HR.el('button', { class: 'btn primary', type: 'button', text: 'Ping' });
-    row.appendChild(inp); row.appendChild(btn);
-    mount.appendChild(row);
-
-    const out = HR.el('div', { class: 'env-out' });
-    mount.appendChild(out);
-    out.appendChild(HR.el('div', {
-      class: 'env-hintline',
-      html: 'The app runs: <span class="mono">' + HR.esc(env.shellCmd) + '</span>'
-    }));
-
-    function run() {
-      const v = inp.value;
-      out.innerHTML = '';
-      if (!v.trim()) { out.appendChild(banner('info', 'Enter a hostname.')); return; }
-      for (const rule of (env.waf || [])) {
-        if (rule.re.test(v)) {
-          out.appendChild(banner('blocked', '<b>WAF:</b> ' + HR.esc(rule.msg)));
-          return;
-        }
-      }
-      const r = env.run(v);
-      const pre = HR.el('pre', { class: 'env-pre env-shellout' });
-      pre.textContent = (r.out || []).join('\n') || '(no output)';
-      out.appendChild(pre);
-      if (r.note) out.appendChild(banner('info', HR.esc(r.note)));
-      if (r.solved) {
-        out.appendChild(flagPanel(lab.flag, api));
-        fireSolve(lab, api, lab.flag, mount);
-      }
-    }
-    btn.addEventListener('click', run);
-    if (inp.tagName === 'INPUT') inp.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
   };
 
   /* ============================================================
@@ -350,7 +105,7 @@ window.HR.envs = (function () {
         ctx.solvedFlag = true;
         print('');
         printHTML('<span class="term-flag">FLAG CAPTURED: ' + HR.esc(flag) + '</span>');
-        fireSolve(lab, api, flag, mount);
+        if (api && api.onSolve) api.onSolve(flag);
       }
     };
 
@@ -399,17 +154,17 @@ window.HR.envs = (function () {
         const target = args.filter(a => a[0] !== '-')[0] || ctx.cwd;
         const n = node(target);
         if (!n) { io.err('ls: cannot access ' + target + ': No such file or directory'); return true; }
-        if (n.type === 'f') { print(target); return true; }
-        const names = Object.keys(n.children).sort();
-        if (!names.length) { print('(empty)'); return true; }
-        if (!long) { print(names.join('  ')); return true; }
-        const lines = names.map(name => {
-          const c = n.children[name];
+        const row = (c, name) => {
           const isDir = c.type === 'd';
           const mode = c.mode || (isDir ? 'drwxr-xr-x' : '-rw-r--r--');
           const size = isDir ? '4096' : String((c.content || '').length);
-          return mode.padEnd(11) + '1 student student ' + size.padStart(7) + ' ' + name;
-        });
+          return mode.padEnd(11) + '1 ' + user + ' ' + user + ' ' + size.padStart(7) + ' ' + name;
+        };
+        if (n.type === 'f') { print(long ? row(n, target) : target); return true; }
+        const names = Object.keys(n.children).sort();
+        if (!names.length) { print('(empty)'); return true; }
+        if (!long) { print(names.join('  ')); return true; }
+        const lines = names.map(name => row(n.children[name], name));
         print('total ' + names.length);
         print(lines.join('\n'));
         return true;

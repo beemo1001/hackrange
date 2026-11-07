@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange labs · Linux Diagnosis (6 labs)
+   HackGrid labs · Linux Diagnosis (6 labs)
    An interactive simulated shell. No hints on the box itself:
    explore, run commands, reason. Realistic failure scenarios
    from junior sysadmin life.
@@ -40,20 +40,20 @@ HR.defineLab({
         io.print('[*] running deploy checklist...');
         io.print('[+] deployment finished successfully');
         io.print('');
-        io.print('deploy daemon: integrity token HR{execute_bit}');
-        io.solve('HR{execute_bit}');
+        io.print('deploy daemon: integrity token HG{execute_bit}');
+        io.solve('HG{execute_bit}');
       }
       return true;
     }
   },
-  flag: 'HR{execute_bit}',
+  flag: 'HG{execute_bit}',
   flagNote: 'Run the script successfully. The terminal reveals the flag.',
   hints: [
     'Start with ls -l deploy.sh. Read the permission string character by character.',
     '-rw-r--r-- means: owner can read and write, NOBODY can execute. The x bit is simply absent.',
     'chmod 700 deploy.sh (owner gets read, write, execute) and then run ./deploy.sh'
   ],
-  walk: '<span class="mono">ls -l deploy.sh</span> shows <span class="mono">-rw-r--r--</span>: three triads for owner, group, others, and no x anywhere. <span class="mono">chmod 700 deploy.sh</span> grants read, write, execute to the owner only (7 = rwx, 0 = nothing for everyone else), then <span class="mono">./deploy.sh</span> runs. The deploy daemon prints the flag <span class="mono">HR{execute_bit}</span>. Permission triads are read as 4 read, 2 write, 1 execute, summed per owner group other: 700 is a private executable, 755 is a shared one, 644 is a normal file. When something refuses to run, check the x bit BEFORE blaming the script: Linux answers "permission denied" for missing x and "no such file" for a broken interpreter line, and the two diagnoses lead to completely different fixes.',
+  walk: '<span class="mono">ls -l deploy.sh</span> shows <span class="mono">-rw-r--r--</span>: three triads for owner, group, others, and no x anywhere. <span class="mono">chmod 700 deploy.sh</span> grants read, write, execute to the owner only (7 = rwx, 0 = nothing for everyone else), then <span class="mono">./deploy.sh</span> runs. The deploy daemon prints the flag <span class="mono">HG{execute_bit}</span>. Permission triads are read as 4 read, 2 write, 1 execute, summed per owner group other: 700 is a private executable, 755 is a shared one, 644 is a normal file. When something refuses to run, check the x bit BEFORE blaming the script: Linux answers "permission denied" for missing x and "no such file" for a broken interpreter line, and the two diagnoses lead to completely different fixes.',
   study: 'SecLab · Linux Errors · EACCES page explains every permission character.'
 });
 
@@ -103,21 +103,21 @@ HR.defineLab({
         io.print('');
         io.print('removed 41G from /var/log/app.log');
         io.print('systemd[1]: storaged.service: recovering...');
-        io.print('storaged: checkpoint written, manifest contains HR{disk_clear}');
-        io.solve('HR{disk_clear}');
+        io.print('storaged: checkpoint written, manifest contains HG{disk_clear}');
+        io.solve('HG{disk_clear}');
         return true;
       }
       return false;
     }
   },
-  flag: 'HR{disk_clear}',
+  flag: 'HG{disk_clear}',
   flagNote: 'Free the disk. The terminal reveals the flag when the daemon recovers.',
   hints: [
     'Confirm the problem and its size: df -h shows the filesystem at 100%. Now find WHAT is eating it.',
     'du -sh /var/log/* walks the log directory and prints per directory sizes. One file dwarfs the rest.',
     'rm /var/log/app.log removes the runaway log. The storage daemon restarts itself once space exists.'
   ],
-  walk: 'The diagnostic ladder for full disks: <span class="mono">df -h</span> confirms which filesystem is full (here /, at 100%). <span class="mono">du -sh /var/log/*</span> hunts the bulk and finds <span class="mono">41G /var/log/app.log</span>, a log with a stuck error loop. <span class="mono">rm /var/log/app.log</span> frees the space and the storage daemon writes its checkpoint containing the flag <span class="mono">HR{disk_clear}</span>. Two pro habits: first, when a process holds an open deleted file, space is not freed until restart (logrotate exists for this reason), and second, ALWAYS find the cause (the error loop), not just the symptom (the big file), or the log grows back tomorrow.',
+  walk: 'The diagnostic ladder for full disks: <span class="mono">df -h</span> confirms which filesystem is full (here /, at 100%). <span class="mono">du -sh /var/log/*</span> hunts the bulk and finds <span class="mono">41G /var/log/app.log</span>, a log with a stuck error loop. <span class="mono">rm /var/log/app.log</span> frees the space and the storage daemon writes its checkpoint containing the flag <span class="mono">HG{disk_clear}</span>. Two pro habits: first, when a process holds an open deleted file, space is not freed until restart (logrotate exists for this reason), and second, ALWAYS find the cause (the error loop), not just the symptom (the big file), or the log grows back tomorrow.',
   study: 'SecLab · Linux Errors · ENOSPC page: the deleted-but-open file gotcha.'
 });
 
@@ -155,8 +155,8 @@ HR.defineLab({
           io.print('nginx.service: Scheduled restart job, restart counter is at 1.');
           io.print('Nov 03 18:58:40 proxy-01 systemd[1]: Started A high performance web server.');
           io.print('');
-          io.print('root page now serves: proxy up · health token HR{config_ninja}');
-          io.solve('HR{config_ninja}');
+          io.print('root page now serves: proxy up · health token HG{config_ninja}');
+          io.solve('HG{config_ninja}');
         }
         return true;
       }
@@ -190,14 +190,14 @@ HR.defineLab({
       return false;
     }
   },
-  flag: 'HR{config_ninja}',
+  flag: 'HG{config_ninja}',
   flagNote: 'Fix the config and start nginx. The terminal reveals the flag.',
   hints: [
     'Ask in order: systemctl status nginx (what), journalctl -u nginx (why), nginx -t (where exactly).',
     'The error names the file, the line and the crime: unknown directive "serverr_name" in app.conf line 4.',
     'sed -i \'s/serverr/server/\' /etc/nginx/sites-enabled/app.conf then systemctl start nginx'
   ],
-  walk: 'The diagnostic ladder for dead services: <span class="mono">systemctl status nginx</span> shows failed, <span class="mono">journalctl -u nginx</span> prints <span class="mono">nginx: [emerg] unknown directive "serverr_name" in /etc/nginx/sites-enabled/app.conf:4</span>, and <span class="mono">nginx -t</span> confirms the config test fails. The crime: a typo, <span class="mono">serverr_name</span> instead of <span class="mono">server_name</span>. Fix: <span class="mono">sed -i \'s/serverr/server/\' /etc/nginx/sites-enabled/app.conf</span> then <span class="mono">systemctl start nginx</span>. The health page carries the flag <span class="mono">HR{config_ninja}</span>. The lesson generalizes to every service on Linux: status tells you THAT it died, the journal tells you WHY, and the config test tells you WHERE. Never debug a config file by reading all of it when the daemon will point at the exact line.',
+  walk: 'The diagnostic ladder for dead services: <span class="mono">systemctl status nginx</span> shows failed, <span class="mono">journalctl -u nginx</span> prints <span class="mono">nginx: [emerg] unknown directive "serverr_name" in /etc/nginx/sites-enabled/app.conf:4</span>, and <span class="mono">nginx -t</span> confirms the config test fails. The crime: a typo, <span class="mono">serverr_name</span> instead of <span class="mono">server_name</span>. Fix: <span class="mono">sed -i \'s/serverr/server/\' /etc/nginx/sites-enabled/app.conf</span> then <span class="mono">systemctl start nginx</span>. The health page carries the flag <span class="mono">HG{config_ninja}</span>. The lesson generalizes to every service on Linux: status tells you THAT it died, the journal tells you WHY, and the config test tells you WHERE. Never debug a config file by reading all of it when the daemon will point at the exact line.',
   study: 'SecLab · Linux Errors · service failure diagnosis ladder.'
 });
 
@@ -249,8 +249,8 @@ HR.defineLab({
         if (dnsOk()) {
           io.print('<html><body>packages index: 42 debs available</body></html>');
           io.print('');
-          io.print('mirror: served HR{dns_fixed} in the mirror banner header');
-          io.solve('HR{dns_fixed}');
+          io.print('mirror: served HG{dns_fixed} in the mirror banner header');
+          io.solve('HG{dns_fixed}');
         } else {
           io.print('curl: (6) Could not resolve host: ' + url.replace(/^https?:\/\//, ''));
         }
@@ -272,14 +272,14 @@ HR.defineLab({
       return false;
     }
   },
-  flag: 'HR{dns_fixed}',
+  flag: 'HG{dns_fixed}',
   flagNote: 'Repair name resolution. The terminal reveals the flag when the download succeeds.',
   hints: [
     'Split the problem in half: can you reach the NETWORK at all? ping 1.1.1.1 by IP. If yes, routing and internet are fine.',
     'ping packages.example.com by NAME fails while the IP works: the break is between names and numbers. Read /etc/resolv.conf.',
     'nameserver 192.168.1.999 is not a valid IPv4 address. Overwrite the file: echo "nameserver 1.1.1.1" > /etc/resolv.conf and retry curl.'
   ],
-  walk: 'The resolution chain: IP connectivity, then DNS config, then the resolver. <span class="mono">ping 1.1.1.1</span> answers: the network is fine. <span class="mono">ping packages.example.com</span> fails: names are the problem. <span class="mono">cat /etc/resolv.conf</span> shows <span class="mono">nameserver 192.168.1.999</span>, an impossible IPv4 address (999 exceeds 255 per octet), so every lookup times out. Fix it: <span class="mono">echo "nameserver 1.1.1.1" &gt; /etc/resolv.conf</span> then <span class="mono">curl https://packages.example.com/deb</span> succeeds and the mirror banner carries <span class="mono">HR{dns_fixed}</span>. The debugging pattern is the real takeaway: NAME fails + IP works = DNS. It bisects the network stack in two commands and works on every Linux box you will ever touch.',
+  walk: 'The resolution chain: IP connectivity, then DNS config, then the resolver. <span class="mono">ping 1.1.1.1</span> answers: the network is fine. <span class="mono">ping packages.example.com</span> fails: names are the problem. <span class="mono">cat /etc/resolv.conf</span> shows <span class="mono">nameserver 192.168.1.999</span>, an impossible IPv4 address (999 exceeds 255 per octet), so every lookup times out. Fix it: <span class="mono">echo "nameserver 1.1.1.1" &gt; /etc/resolv.conf</span> then <span class="mono">curl https://packages.example.com/deb</span> succeeds and the mirror banner carries <span class="mono">HG{dns_fixed}</span>. The debugging pattern is the real takeaway: NAME fails + IP works = DNS. It bisects the network stack in two commands and works on every Linux box you will ever touch.',
   study: 'SecLab · Linux Errors · DNS resolution chain and every failure point on it.'
 });
 
@@ -335,22 +335,22 @@ HR.defineLab({
       if (ctx.pathFixed || /\bscripts\b/.test(ctx.cwd)) {
         io.print('backup done');
         io.print('');
-        io.print('tar: archive contains integrity stamp HR{cron_cwd_trap}');
-        io.solve('HR{cron_cwd_trap}');
+        io.print('tar: archive contains integrity stamp HG{cron_cwd_trap}');
+        io.solve('HG{cron_cwd_trap}');
       } else {
         io.print('/home/student/scripts/backup.sh: line 2: cd: backup: No such file or directory');
       }
       return true;
     }
   },
-  flag: 'HR{cron_cwd_trap}',
+  flag: 'HG{cron_cwd_trap}',
   flagNote: 'Fix the script and produce a successful backup. The terminal reveals the flag.',
   hints: [
     'The evidence is in two places: cat backup.log (what failed at 2:30) and the script itself. Run ./scripts/backup.sh by hand from home first.',
     'The script does cd backup, a RELATIVE path. It works when you run it from the scripts directory, but cron runs it with your home as working directory. From home, there is no ./backup.',
     'sed -i \'s|cd backup|cd /home/student/scripts/backup|\' /home/student/scripts/backup.sh then bash /home/student/scripts/backup.sh'
   ],
-  walk: 'The failure chain: cron executes <span class="mono">/home/student/scripts/backup.sh</span> with the user home as the working directory, the script does <span class="mono">cd backup</span> relative, and from <span class="mono">/home/student</span> there is no <span class="mono">backup</span> subdirectory, so it dies at line 2 while you sleep. The log says so every night: <span class="mono">cd: backup: No such file or directory</span>. Fix the path: <span class="mono">sed -i \'s|cd backup|cd /home/student/scripts/backup|\' /home/student/scripts/backup.sh</span>, then <span class="mono">bash /home/student/scripts/backup.sh</span> produces the archive with the stamp <span class="mono">HR{cron_cwd_trap}</span>. Cron cwd and minimal PATH are the two classic cron gotchas: cron is NOT your shell. Always use absolute paths in cron jobs, and test with the exact environment cron provides, not your interactive one.',
+  walk: 'The failure chain: cron executes <span class="mono">/home/student/scripts/backup.sh</span> with the user home as the working directory, the script does <span class="mono">cd backup</span> relative, and from <span class="mono">/home/student</span> there is no <span class="mono">backup</span> subdirectory, so it dies at line 2 while you sleep. The log says so every night: <span class="mono">cd: backup: No such file or directory</span>. Fix the path: <span class="mono">sed -i \'s|cd backup|cd /home/student/scripts/backup|\' /home/student/scripts/backup.sh</span>, then <span class="mono">bash /home/student/scripts/backup.sh</span> produces the archive with the stamp <span class="mono">HG{cron_cwd_trap}</span>. Cron cwd and minimal PATH are the two classic cron gotchas: cron is NOT your shell. Always use absolute paths in cron jobs, and test with the exact environment cron provides, not your interactive one.',
   study: 'SecLab · Linux Errors · cron environment differences.'
 });
 
@@ -392,8 +392,8 @@ HR.defineLab({
         if (this._cleaned) {
           io.print('(created /tmp/test.txt successfully)');
           io.print('');
-          io.print('app daemon: storage healthy again, writing manifest HR{inodes_not_bytes}');
-          io.solve('HR{inodes_not_bytes}');
+          io.print('app daemon: storage healthy again, writing manifest HG{inodes_not_bytes}');
+          io.solve('HG{inodes_not_bytes}');
         } else {
           io.print('touch: cannot touch \'/tmp/test.txt\': No space left on device');
         }
@@ -420,13 +420,13 @@ HR.defineLab({
       return false;
     }
   },
-  flag: 'HR{inodes_not_bytes}',
+  flag: 'HG{inodes_not_bytes}',
   flagNote: 'Restore the ability to create files. The terminal reveals the flag.',
   hints: [
     'df -h says 71% used with 12 GB free, yet writes fail. Bytes are fine, so the OTHER filesystem resource must be exhausted. df has a flag for it.',
     'df -i shows inode usage: 100%. Every file, however tiny, consumes one inode. Now hunt the file COUNT: what directory could hold millions of files?',
     'The hint file names it: /var/spool/sessions. ls it (pipe through wc -l if you like) then rm -rf /var/spool/sessions and retry touch /tmp/test.txt'
   ],
-  walk: 'A filesystem has TWO capacities: bytes (df -h) and inodes (df -i), the metadata slots for files. Here bytes are at 71% but inodes are at 100%: 5.2M inodes, all consumed. <span class="mono">df -i</span> is the tell. Counting suspects: <span class="mono">ls /var/spool/sessions | wc -l</span> reports 2,048,317 tiny session cache files, each stealing an inode while wasting almost no bytes, which is why -h looked innocent. <span class="mono">rm -rf /var/spool/sessions</span> frees them and <span class="mono">touch /tmp/test.txt</span> succeeds; the app manifest carries <span class="mono">HR{inodes_not_bytes}</span>. Whenever "No space" contradicts df -h, check df -i. It is the interview question that separates admins who memorize commands from admins who understand filesystems.',
+  walk: 'A filesystem has TWO capacities: bytes (df -h) and inodes (df -i), the metadata slots for files. Here bytes are at 71% but inodes are at 100%: 5.2M inodes, all consumed. <span class="mono">df -i</span> is the tell. Counting suspects: <span class="mono">ls /var/spool/sessions | wc -l</span> reports 2,048,317 tiny session cache files, each stealing an inode while wasting almost no bytes, which is why -h looked innocent. <span class="mono">rm -rf /var/spool/sessions</span> frees them and <span class="mono">touch /tmp/test.txt</span> succeeds; the app manifest carries <span class="mono">HG{inodes_not_bytes}</span>. Whenever "No space" contradicts df -h, check df -i. It is the interview question that separates admins who memorize commands from admins who understand filesystems.',
   study: 'SecLab · Linux Errors · ENOSPC page, the inode half of the story.'
 });

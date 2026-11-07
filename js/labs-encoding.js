@@ -1,5 +1,5 @@
 /* ============================================================
-   HackRange labs · Encoding & Decoding (7 labs)
+   HackGrid labs · Encoding & Decoding (7 labs)
    The decoder mindset: layers, structure, and the difference
    between encoding and encryption.
    ============================================================ */
